@@ -31,14 +31,16 @@ int main(int argc, char *argv[]) {  char *p1, *p2, *ap, *cp;  SIG_TYP oldintr;
   zero = (unsigned *)malloc(nlall * sizeof(unsigned));  tfname = mktemp(tmpXXXXX);  init();
   if (oldintr!=SIG_IGN) { signal(SIGINT, onintr); }  if (oldhup!=SIG_IGN) { signal(SIGHUP, onhup); }
 
-  if (argc > 2) {
-    char *temp = "g/";
-    printf("Before argv \n");
-    argv[0] = (char*)malloc(2*sizeof(char));
-    argv[0] = strcat("g/",argv[0]);
-    }
-    printf("After \n");
-    printf("%s \n", argv[0]);
+  //Attempt to make it work like Grep
+
+  //if (argc > 2) {
+    //char *temp = "g/";
+    //printf("Before argv \n");
+    //argv[0] = (char*)malloc(2*sizeof(char));
+    //argv[0] = strcat("g/",argv[0]);
+    //}
+    //printf("After \n");
+    //printf("%s \n", argv[0]);
    
 
 
