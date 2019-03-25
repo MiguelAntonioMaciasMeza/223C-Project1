@@ -1,0 +1,26 @@
+e rings.txt
+,p
+1,5
+z
+g/ing
+z
+g/or
+z
+a
+c
+d
+f
+i
+j
+k
+l
+m
+n
+r
+t
+u
+v
+W
+z
+q
+
