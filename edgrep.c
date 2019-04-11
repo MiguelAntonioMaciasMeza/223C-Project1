@@ -324,7 +324,7 @@ int search(char* arg){
             gp++;
         }
 
-       printf("We found %s this man times: %i \n", begin, count);
+       printf("We found %s this many times: %i \n", arg, count);
        count = 0;
        gp = begin;
        arg++;
