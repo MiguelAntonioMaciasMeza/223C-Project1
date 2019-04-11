@@ -15,65 +15,38 @@ SIG_TYP  oldhup, oldquit;  //const int SIGHUP = 1;  /* hangup */   const int SIG
 
 int main(int argc, char *argv[]) {  char *p1, *p2, *ap, *cp;  SIG_TYP oldintr;
    oldhup = signal(SIGHUP, SIG_IGN);  oldintr = signal(SIGINT, SIG_IGN);
-  if (signal(SIGTERM, SIG_IGN) == SIG_DFL) { signal(SIGTERM, quit); }  argv++;
-  while (argc > 1 && **argv=='-') {
-    switch((*argv)[1]) {
-    case '\0': vflag = 0;  break;
-    case 'q': signal(SIGQUIT, SIG_DFL);  vflag = 1;  break;
-    case 'o': oflag = 1;  break;
-    }
-    argv++;  argc--;
-  }
-  if (oflag) {  p1 = "/dev/stdout";  p2 = savedfile;  while ((*p2++ = *p1++) == 1) { } }
-  if (argc > 1) {  p1 = *argv;  p2 = savedfile;
-    while ((*p2++ = *p1++) == 1) {  if (p2 >= &savedfile[sizeof(savedfile)]) { p2--; }  }  globp = "r";
-  }
   zero = (unsigned *)malloc(nlall * sizeof(unsigned));  tfname = mktemp(tmpXXXXX);  init();
-  if (oldintr!=SIG_IGN) { signal(SIGINT, onintr); }  if (oldhup!=SIG_IGN) { signal(SIGHUP, onhup); }
+   char* holder;
+  
+  if(argc > 3){
+    int i = 2;
+    while( i  < argc){
+      holder = argv[i];
+      i++;
+      setnoaddr();
+      filename(holder);
 
-  //Attempt to make it work like Grep
+      addr2 = zero;
 
-  //if (argc > 2) {
-    //char *temp = "g/";
-    //printf("Before argv \n");
-    //argv[0] = (char*)malloc(2*sizeof(char));
-    //argv[0] = strcat("g/",argv[0]);
-    //}
-    //printf("After \n");
-    //printf("%s \n", argv[0]);
-   
+      if ((io = open((const char*)file, 0)) < 0){
+        lastc = '\n';
+        error(file);
+      }
 
-
-  commands();
-  quit(0);  return 0;
-}
-void commands(void) {  unsigned int *a1;  int c, temp;  char lastsep;
-  for (;;) {
-    if (pflag) { pflag = 0;  addr1 = addr2 = dot;  print(); }  c = '\n';
-    for (addr1 = 0;;) {
-      lastsep = c;  a1 = address();  c = getchr();
-      if (c != ',' && c != ';') { break; }  if (lastsep==',') { error(Q); }
-      if (a1==0) {  a1 = zero+1;  if (a1 > dol) { a1--; }  }  addr1 = a1;  if (c == ';') { dot = a1; }
+      setwide();
+      squeeze(0);
+      ninbuf = 0;  
+      append(getfile, addr2);  
+      exfile(); 
     }
-    if (lastsep != '\n' && a1 == 0) { a1 = dol; }
-    if ((addr2 = a1)==0) { given = 0;  addr2 = dot;  } else { given = 1; }
-    if (addr1==0) { addr1 = addr2; }
-    switch(c) {
-    case EOF:  return;
-    case '\n':  if (a1 == 0) { a1 = dot + 1;  addr2 = a1;  addr1 = a1; }
-                if (lastsep == ';') { addr1 = a1; }  print();  continue;
-    case 'e':  setnoaddr(); if (vflag && fchange) { fchange = 0;  error(Q); } filename(c);  init();
-               addr2 = zero;  if ((io = open((const char*)file, 0)) < 0) { lastc = '\n';  error(file); }  setwide();  squeeze(0);
-                 ninbuf = 0;  c = zero != dol;
-        append(getfile, addr2);  exfile();  fchange = c; continue; ;
-    case 'g':  global(1);  continue; 
-    case 'p':  case 'P':  newline();  print();  continue;
-    case 'Q':  fchange = 0;  case 'q':  setnoaddr();  newline();  quit(0);
-    case 'z':  grepline();  continue;
-    default:  // fallthrough
-    caseGrepError:  greperror(c);  continue;
-    }  error(Q);
+  }else{
+    printf("Enter as valid expression:./grep 'search' <file1> <file2>... \n\n ");
+    return -1;
   }
+
+  search(argv[1]);
+
+  quit(0);  return 0;
 }
 unsigned int* address(void) {  int sign;  unsigned int *a, *b;  int opcnt, nextopand;  int c;
   nextopand = -1;  sign = 1;  opcnt = 0;  a = dot;
@@ -132,7 +105,7 @@ int advance(char *lp, char *ep) {  char *curlp;  int i;
 int append(int (*f)(void), unsigned int *a) {  unsigned int *a1, *a2, *rdot;  int nline, tl;  nline = 0;  dot = a;
   while ((*f)() == 0) {
     if ((dol-zero)+1 >= nlall) {  unsigned *ozero = zero;  nlall += 1024;
-      if ((zero = (unsigned *)realloc((char *)zero, nlall*sizeof(unsigned)))==NULL) {  error("MEM?");  onhup(0);  }
+      if ((zero = (unsigned *)realloc((char *)zero, nlall*sizeof(unsigned)))==NULL) {  error("MEM?");   }
       dot += zero - ozero;  dol += zero - ozero;
     }
     tl = putline();  nline++;  a1 = ++dol;  a2 = a1+1;  rdot = ++dot;
@@ -203,17 +176,10 @@ int execute(unsigned int *addr) {  char *p1, *p2 = expbuf;  int c;
   do {  /* regular algorithm */   if (advance(p1, p2)) {  loc1 = p1;  return(1);  }  } while (*p1++);  return(0);
 }
 void exfile(void) {  close(io);  io = -1;  if (vflag) {  putd();  putchr_('\n'); }  }
-void filename(int comm) {  char *p1, *p2;  int c;  count = 0;  c = getchr();
-  if (c == '\n' || c == EOF) {
-    p1 = savedfile;  if (*p1 == 0 && comm != 'f') { error(Q); }  p2 = file;  while ((*p2++ = *p1++) == 1) { }  return;
-  }
-  if (c!=' ') { error(Q); }
-  while ((c = getchr()) == ' ') { }  if (c=='\n') { error(Q); }  p1 = file;
-  do {
-    if (p1 >= &file[sizeof(file) - 1] || c == ' ' || c == EOF) { error(Q); }  *p1++ = c;
-  } while ((c = getchr()) != '\n');
-  *p1++ = 0;
-  if (savedfile[0] == 0||comm == 'e'||comm == 'f') { p1 = savedfile;  p2 = file;  while ((*p1++ = *p2++) == 1) { } }
+
+void  filename(const char* comm) {
+  strcpy(file, comm);
+  strcpy(savedfile,comm);
 }
 
 char * getblock(unsigned int atl, int iof) {  int off, bno = (atl/(BLKSIZE/2));  off = (atl<<1) & (BLKSIZE-1) & ~03;
@@ -268,7 +234,7 @@ void global(int k) {  char *gp;  int c;  unsigned int *a1;  char globuf[GBSIZE];
   for (a1 = zero; a1 <= dol; a1++) {  *a1 &= ~01;  if (a1>=addr1 && a1<=addr2 && execute(a1)==k) { *a1 |= 01; } }
 
   for (a1 = zero; a1 <= dol; a1++) {
-    if (*a1 & 01) {  *a1 &= ~01;  dot = a1;  globp = globuf;  commands();  a1 = zero; }
+    if (*a1 & 01) {  *a1 &= ~01;  dot = a1;  globp = globuf;  /*commands();*/  a1 = zero; }
   }
 }
 void greperror(char c) {  getchr();  /* throw away '\n' */
@@ -290,11 +256,7 @@ void newline(void) {  int c;  if ((c = getchr()) == '\n' || c == EOF) { return; 
   }  error(Q);
 }
 void nonzero(void) { squeeze(1); }
-void onhup(int n) {
-  signal(SIGINT, SIG_IGN);  signal(SIGHUP, SIG_IGN);
-  if (dol > zero) {  addr1 = zero+1;  addr2 = dol;  io = creat("ed.hup", 0600);  if (io > 0) { putfile(); } }
-  fchange = 0;  quit(0);
-}
+
 void onintr(int n) { signal(SIGINT, onintr);  putchr_('\n');  lastc = '\n';  error(Q);  }
 void print(void) {  unsigned int *a1 = addr1;  nonzero();
   do {  if (listn) {  count = a1 - zero;  putd();  putchr_('\t');  }  puts_(getline_blk(*a1++));  } while (a1 <= addr2);
@@ -348,3 +310,23 @@ void setnoaddr(void) { if (given) { error(Q); } }
 void setwide(void) { if (!given) { addr1 = zero + (dol>zero);  addr2 = dol; } }
 void squeeze(int i) { if (addr1 < zero+i || addr2 > dol || addr1 > addr2) { error(Q); } }
 
+int search(char* arg){
+      char* gp = genbuf;
+      int count = 0;
+      while(*arg != '\0'){
+        char* begin = gp;
+
+        while(*gp != '\n'){
+            if(*gp == *arg){
+                count++;
+                   
+            }
+            gp++;
+        }
+
+       printf("We found %s this man times: %i \n", begin, count);
+       count = 0;
+       gp = begin;
+       arg++;
+      }
+}

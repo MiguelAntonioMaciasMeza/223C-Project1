@@ -15,12 +15,12 @@ char  Q[] = "", T[] = "TMP", savedfile[FNSIZE], file[FNSIZE], linebuf[LBSIZE], r
 char  genbuf[LBSIZE], *nextip, *linebp, *globp, *mktemp(char *), tmpXXXXX[50] = "/tmp/eXXXXX";
 char  *tfname, *loc1, *loc2, ibuff[BLKSIZE], obuff[BLKSIZE], WRERR[]  = "WRITE ERROR", *braslist[NBRA], *braelist[NBRA];
 char  line[70];  char  *linp  = line;
-void commands(void); void add(int i);  unsigned int *address(void);  int advance(char *lp, char *ep);
+void commands(char* arg); void add(int i);  unsigned int *address(void);  int advance(char *lp, char *ep);
 int append(int (*f)(void), unsigned int *a);  int backref(int i, char *lp);
 void blkio(int b, char *buf, long (*iofcn)(int, void*, unsigned long));  void callunix(void);
 int cclass(char *set, int c, int af);  void compile(int eof);
 int compsub(void);  void dosub(void);  void error(char *s);  int execute(unsigned int *addr);  void exfile(void);
-void filename(int comm);  void gdelete(void);  char *getblock(unsigned int atl, int iof); int getchr(void);
+void  filename(const char* comm);  void gdelete(void);  char *getblock(unsigned int atl, int iof); int getchr(void);
 int getfile(void);  char *getline_blk(unsigned int tl);  int getnum(void);  int getsub(void);
 void global(int k);  void init(void);
 void join(void);  void move_(int cflag);  void newline(void);  void nonzero(void);  void onhup(int n);
@@ -30,3 +30,4 @@ void rdelete(unsigned int *ad1, unsigned int *ad2);  void reverse(unsigned int *
 void setwide(void);  void setnoaddr(void);  void squeeze(int);  void substitute(int inglob);
 char grepbuf[GBSIZE];
 void greperror(char);  void grepline(void);
+int search();
